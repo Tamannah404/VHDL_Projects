@@ -13,7 +13,7 @@ Implementation of AND gate using VHDL with simulation.
 ## Tools
 
 * VHDL
-* (ModelSim / Vivado / Quartus)
+* Vivado 
 
 ## Result
 
