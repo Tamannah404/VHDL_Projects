@@ -1,0 +1,137 @@
+# 2-to-4 Line Decoder (VHDL) — Xilinx Vivado
+
+A simple 2-to-4 line decoder implemented in VHDL and synthesized on a Xilinx FPGA using Vivado. This project is intended as a beginner-friendly reference for digital logic design using VHDL.
+
+---
+
+## What is a 2-to-4 Decoder?
+
+A 2-to-4 decoder takes a 2-bit binary input and activates exactly **one** of 4 output lines (one-hot encoding). An **enable pin (EN)** acts as a master switch — when disabled, all outputs go low regardless of the input.
+
+---
+
+## Truth Table
+
+| EN | A1 | A0 | Y3 | Y2 | Y1 | Y0 |
+|----|----|----|----|----|----|----|
+|  0 |  x |  x |  0 |  0 |  0 |  0 |
+|  1 |  0 |  0 |  0 |  0 |  0 |  1 |
+|  1 |  0 |  1 |  0 |  0 |  1 |  0 |
+|  1 |  1 |  0 |  0 |  1 |  0 |  0 |
+|  1 |  1 |  1 |  1 |  0 |  0 |  0 |
+
+> `x` = don't care
+
+---
+
+## Project Structure
+
+```
+decoder-2to4/
+├── README.md
+├── vhdl/
+│   ├── decoder_2to4.vhd        # Main design file
+│   └── tb_decoder_2to4.vhd     # Testbench
+└── docs/
+    ├── truth_table.md
+    └── rtl_schematic.png       # Synthesized schematic (see below)
+```
+
+---
+
+## RTL Schematic
+
+The schematic below was generated using **Xilinx Vivado** after synthesis. It shows the design mapped to a **SLICEM** primitive (`SLICE_X14Y123`) using internal carry logic and LUT-based outputs.
+
+![!RTL schematic](Decoder2to4_schmatic.png)]
+
+### Schematic Explanation
+
+The synthesized design uses a single **SLICEM** (Slice with Memory capability) on the FPGA fabric:
+
+- **S0–S3** — Select/input lines mapped from `A(1:0)` and `EN`
+- **DI0–DI3** — Data inputs feeding into the LUT logic
+- **O0–O3** — Output lines corresponding to `Y(0)` through `Y(3)`
+- **CO0–CO3** — Carry-out lines used internally by the slice
+- **CIN / CYINIT** — Carry-in initialization for the carry chain
+- **O0 (CYINIT path)** — Handles the base carry initialization
+
+The decoder logic is efficiently packed into a **single FPGA slice**, demonstrating minimal resource utilization.
+
+---
+
+## VHDL Source
+
+### decoder_2to4.vhd
+
+```vhdl
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity decoder_2to4 is
+    Port (
+        A  : in  STD_LOGIC_VECTOR(1 downto 0);
+        EN : in  STD_LOGIC;
+        Y  : out STD_LOGIC_VECTOR(3 downto 0)
+    );
+end decoder_2to4;
+
+architecture Behavioral of decoder_2to4 is
+begin
+    process(A, EN)
+    begin
+        if EN = '1' then
+            case A is
+                when "00"   => Y <= "0001";
+                when "01"   => Y <= "0010";
+                when "10"   => Y <= "0100";
+                when "11"   => Y <= "1000";
+                when others => Y <= "0000";
+            end case;
+        else
+            Y <= "0000";
+        end if;
+    end process;
+end Behavioral;
+```
+
+---
+
+## Tools Used
+
+| Tool | Version |
+|------|---------|
+| Xilinx Vivado | 2021.1 |
+| VHDL Standard | VHDL-93/2008 |
+| Target Device | Artix-7 (xc7a35t) |
+| License | WebPACK (Free) |
+
+---
+
+## How to Run
+
+1. Clone this repository
+2. Open **Xilinx Vivado** → Create New Project
+3. Add `vhdl/decoder_2to4.vhd` as design source
+4. Add `vhdl/tb_decoder_2to4.vhd` as simulation source
+5. Right-click `decoder_2to4.vhd` → **Set as Top**
+6. Run **RTL Analysis** to view the schematic
+7. Run **Behavioral Simulation** to verify the truth table
+
+---
+
+## Resource Utilization
+
+| Resource | Used | Available |
+|----------|------|-----------|
+| Slice LUTs | 1 | 20800 |
+| Slice Registers | 0 | 41600 |
+| Slices | 1 | 5200 |
+
+> Synthesized on Artix-7 xc7a35tcpg236-1
+
+---
+
+## License
+
+This project is open source and free to use for educational purposes.
